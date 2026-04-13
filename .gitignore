@@ -1,0 +1,13 @@
+# Mengabaikan folder library/dependensi yang berat
+node_modules/
+
+# Mengabaikan file log
+*.log
+
+# Mengabaikan folder cache model AI jika Anda mendownloadnya secara manual
+models/
+.cache/
+
+# Mengabaikan file sistem operasi
+.DS_Store
+Thumbs.db
