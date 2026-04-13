@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Microstock Metadata Pro - Batch</title>
+    <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 900px; margin: auto; background: #f4f4f9; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        #fileList { margin: 15px 0; border: 1px dashed #aaa; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Microstock Metadata Pro (Batch)</h2>
+        <input type="file" id="upload" multiple accept="image/*" />
+        <p id="status">Pilih foto (5-30 foto), lalu tunggu AI memproses...</p>
+        
+        <table id="resultTable">
+            <thead><tr><th>Filename</th><th>Title</th><th>Keywords</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <br>
+        <button id="downloadCSV">Download CSV untuk Adobe Stock</button>
+    </div>
+
+    <script>
+        const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers');
+        const captioner = await pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
+        let dataStore = [];
+
+        document.getElementById('upload').addEventListener('change', async (e) => {
+            const files = e.target.files;
+            const tbody = document.querySelector('#resultTable tbody');
+            tbody.innerHTML = '';
+            dataStore = [];
+
+            for (let file of files) {
+                const img = URL.createObjectURL(file);
+                const output = await captioner(img);
+                const title = output[0].generated_text;
+                const keywords = title.split(' ').join(', ');
+                
+                dataStore.push({ name: file.name, title, keywords });
+                
+                const row = `<tr><td>${file.name}</td><td>${title}</td><td>${keywords}</td></tr>`;
+                tbody.innerHTML += row;
+            }
+            document.getElementById('status').innerText = "Selesai! Semua metadata siap.";
+        });
+
+        document.getElementById('downloadCSV').onclick = () => {
+            let csv = "Filename,Title,Keywords\n";
+            dataStore.forEach(d => csv += `"${d.name}","${d.title}","${d.keywords}"\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'metadata_adobe.csv';
+            link.click();
+        };
+    </script>
+</body>
+</html>
